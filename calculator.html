@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Tech-Lab Calculator app." />
+  <title>Tech-Lab | Calculator</title>
+
+  <style>
+    :root {
+      --background: #10131f;
+      --surface: rgba(255, 255, 255, 0.08);
+      --text: #f8f7ff;
+      --muted: #b9b7c9;
+      --cyan: #74e8ff;
+      --accent: #f7a8c4;
+      --border: rgba(255, 255, 255, 0.14);
+    }
+
+    :root.light {
+      --background: #f4f7ff;
+      --surface: rgba(255, 255, 255, 0.8);
+      --text: #171a2c;
+      --muted: #5f6478;
+      --border: rgba(20, 30, 70, 0.13);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(116, 91, 214, 0.35), transparent 35%),
+        radial-gradient(circle at 85% 80%, rgba(247, 168, 196, 0.2), transparent 30%),
+        var(--background);
+    }
+
+    .calculator-page {
+      width: min(430px, 100%);
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 18px;
+      color: var(--cyan);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .calculator-card {
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--surface);
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(15px);
+    }
+
+    h1 {
+      margin-bottom: 6px;
+      font-size: 2rem;
+    }
+
+    .subtitle {
+      margin-bottom: 22px;
+      color: var(--muted);
+    }
+
+    .display {
+      width: 100%;
+      min-height: 90px;
+      margin-bottom: 16px;
+      padding: 20px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      color: var(--text);
+      background: rgba(0, 0, 0, 0.22);
+      font-size: 2.2rem;
+      text-align: right;
+      word-break: break-all;
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      min-height: 58px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      font-size: 1.15rem;
+      font-weight: 700;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      background: rgba(116, 232, 255, 0.2);
+    }
+
+    .operator {
+      color: #08141e;
+      background: var(--cyan);
+    }
+
+    .clear {
+      color: #08141e;
+      background: var(--accent);
+    }
+
+    .equals {
+      grid-row: span 2;
+      color: #08141e;
+      background: var(--cyan);
+    }
+
+    .zero {
+      grid-column: span 2;
+    }
+
+    @media (max-width: 420px) {
+      .calculator-card {
+        padding: 18px;
+      }
+
+      .display {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="calculator-page">
+    <a class="back-link" href="index.html">← Back to Tech-Lab</a>
+
+    <section class="calculator-card" aria-label="Calculator">
+      <h1>Tech-Lab Calculator</h1>
+      <p class="subtitle">A simple tool for everyday calculations.</p>
+
+      <div id="display" class="display" aria-live="polite">0</div>
+
+      <div class="keys">
+        <button class="clear" data-action="clear">AC</button>
+        <button data-action="delete">DEL</button>
+        <button data-action="percent">%</button>
+        <button class="operator" data-value="/">÷</button>
+
+        <button data-value="7">7</button>
+        <button data-value="8">8</button>
+        <button data-value="9">9</button>
+        <button class="operator" data-value="*">×</button>
+
+        <button data-value="4">4</button>
+        <button data-value="5">5</button>
+        <button data-value="6">6</button>
+        <button class="operator" data-value="-">−</button>
+
+        <button data-value="1">1</button>
+        <button data-value="2">2</button>
+        <button data-value="3">3</button>
+        <button class="operator" data-value="+">+</button>
+
+        <button class="zero" data-value="0">0</button>
+        <button data-value=".">.</button>
+        <button class="equals" data-action="calculate">=</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const display = document.getElementById("display");
+    let expression = "";
+
+    function updateDisplay(value = expression || "0") {
+      display.textContent = value;
+    }
+
+    function addValue(value) {
+      if (value === "." && expression.split(/[+*/-]/).pop().includes(".")) {
+        return;
+      }
+
+      expression += value;
+      updateDisplay();
+    }
+
+    function calculate() {
+      if (!expression) return;
+
+      try {
+        if (!/^[0-9+*/.% -]+$/.test(expression)) {
+          throw new Error("Invalid expression");
+        }
+
+        const result = Function(`"use strict"; return (${expression})`)();
+
+        if (!Number.isFinite(result)) {
+          throw new Error("Invalid result");
+        }
+
+        expression = String(Number(result.toFixed(10)));
+        updateDisplay();
+      } catch {
+        expression = "";
+        updateDisplay("Error");
+      }
+    }
+
+    document.querySelectorAll("button").forEach((button) => {
+      button.addEventListener("click", () => {
+        const value = button.dataset.value;
+        const action = button.dataset.action;
+
+        if (value) addValue(value);
+        if (action === "clear") {
+          expression = "";
+          updateDisplay();
+        }
+        if (action === "delete") {
+          expression = expression.slice(0, -1);
+          updateDisplay();
+        }
+        if (action === "percent") {
+          expression = expression.replace(/(\d+(\.\d+)?)$/, "$1/100");
+          updateDisplay();
+        }
+        if (action === "calculate") calculate();
+      });
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (/[\d.+*/-]/.test(event.key)) {
+        addValue(event.key);
+      }
+
+      if (event.key === "Enter" || event.key === "=") calculate();
+
+      if (event.key === "Escape") {
+        expression = "";
+        updateDisplay();
+      }
+
+      if (event.key === "Backspace") {
+        expression = expression.slice(0, -1);
+        updateDisplay();
+      }
+
+      if (event.key === "%") {
+        expression = expression.replace(/(\d+(\.\d+)?)$/, "$1/100");
+        updateDisplay();
+      }
+    });
+  </script>
+</body>
+</html>
